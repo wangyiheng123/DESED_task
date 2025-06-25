@@ -12,6 +12,7 @@ import torch
 from sed_scores_eval.base_modules.scores import create_score_dataframe
 from thop import clever_format, profile
 
+
 from desed_task.evaluation.evaluation_measures import compute_sed_eval_metrics
 
 
@@ -223,6 +224,22 @@ def generate_tsv_wav_durations(audio_dir, out_tsv):
     return meta_df
 
 
+# def count_temporal_attention(module, input, output):
+#     # input 是个 tuple，input[0] 是输入张量
+#     B, T, D = input[0].shape  # Batch, 时间步数, 特征维度
+#     macs = 2 * B * T * T * D  # 粗略估算：QK^T + attention*V
+#     module.total_ops += torch.DoubleTensor([macs])
+#
+# def count_linear(m: nn.Linear, x, y):
+#     batch_size = x[0].shape[0]
+#     in_features = m.in_features
+#     out_features = m.out_features
+#     total_ops = batch_size * in_features * out_features
+#     m.total_ops += torch.DoubleTensor([int(total_ops)])
+
+
+
+
 def calculate_macs(model, config, dataset=None):
     """
     The function calculate the multiply–accumulate operation (MACs) of the model given as input.
@@ -235,6 +252,11 @@ def calculate_macs(model, config, dataset=None):
     Returns:
 
     """
+
+    # custom_ops = {
+    #     TemporalAttention: count_temporal_attention,  # 让 THOP 忽略 TemporalAttention 模块
+    #     embedingsModel:count_linear
+    # }
     n_frames = int(
         (
             (config["feats"]["sample_rate"] * config["data"]["audio_max_len"])
@@ -254,3 +276,5 @@ def calculate_macs(model, config, dataset=None):
 
     macs, params = clever_format([macs, params], "%.3f")
     return macs, params
+
+

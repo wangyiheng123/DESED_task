@@ -61,7 +61,7 @@ def extract(batch_size, folder, dset_name, torch_dset, embedding_model, use_gpu=
     for i, batch in enumerate(tqdm(dloader)):
         feats, filenames = batch
         if use_gpu:
-            feats = feats.cuda()
+            feats = feats.cuda(1)
 
         with torch.inference_mode():
             emb = embedding_model(feats)
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_gpu", default="1", help="0 does not use GPU, 1 use GPU")
     parser.add_argument(
         "--batch_size",
-        default="8",
+        default="280",
         help="Batch size for model inference, used to speed up the embedding extraction.",
     )
     parser.add_argument(
@@ -196,7 +196,7 @@ if __name__ == "__main__":
 
     use_gpu = int(args.use_gpu)
     if use_gpu:
-        pretrained = pretrained.cuda()
+        pretrained = pretrained.cuda(1)
 
     pretrained.eval()
     synth_df = pd.read_csv(config["data"]["synth_tsv"], sep="\t")

@@ -8,11 +8,16 @@ import pytorch_lightning as pl
 import torch
 import torchaudio
 import yaml
+from thop.profile import register_hooks
+from torch import nn
+
+from local.lt_loss import embedingsModel
+
 from local.classes_dict import (classes_labels_desed,
                                 classes_labels_maestro_real,
                                 maestro_desed_alias)
 from local.resample_folder import resample_folder
-from local.sed_trainer_pretrained import SEDTask4
+from local.sed_trainer_pretrained1 import SEDTask4
 from local.utils import (calculate_macs, generate_tsv_wav_durations,
                          process_tsvs)
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
@@ -25,6 +30,22 @@ from desed_task.nnet.CRNN import CRNN
 from desed_task.utils.encoder import CatManyHotEncoder, ManyHotEncoder
 from desed_task.utils.schedulers import ExponentialWarmup
 
+from pytorch_lightning.callbacks import ModelCheckpoint
+
+class EarlyLimitedCheckpoint(ModelCheckpoint):
+    def __init__(self, max_epoch_to_save=139, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.max_epoch_to_save = max_epoch_to_save
+
+
+    def on_validation_end(self, trainer, pl_module):
+        current_epoch = trainer.current_epoch
+        if current_epoch <= self.max_epoch_to_save:
+            # 调用原始的保存逻辑
+            super().on_validation_end(trainer, pl_module)
+        else:
+            # 超过指定轮数后不再保存
+            pass
 
 def resample_data_generate_durations(config_data, test_only=False, evaluation=False):
     if not test_only:
@@ -326,6 +347,8 @@ def single_run(
 
     ##### model definition  ############
     sed_student = CRNN(**config["net"])
+    sed_teacher = CRNN(**config["net"])
+    sed_master = CRNN(**config["net"])
 
     if test_state_dict is None:
         ##### data prep train valid ##########
@@ -467,16 +490,23 @@ def single_run(
         )
 
         if config["pretrained"]["freezed"] or not config["pretrained"]["e2e"]:
-            parameters = list(sed_student.parameters())
+            parameters = list(sed_teacher.parameters())
         else:
-            parameters = list(sed_student.parameters()) + list(pretrained.parameters())
+            parameters = list(sed_teacher.parameters()) + list(pretrained.parameters())
         opt = torch.optim.Adam(parameters, config["opt"]["lr"], betas=(0.9, 0.999))
+        opt1 = torch.optim.Adam(list(sed_student.parameters()), config["opt"]["lr"], betas=(0.9, 0.999))
 
         exp_steps = config["training"]["n_epochs_warmup"] * epoch_len
         tot_steps = config["training"]["n_epochs"] * epoch_len
         decay_steps = config["training"]["epoch_decay"] * epoch_len
         exp_scheduler = {
             "scheduler": ExponentialWarmup(opt, config["opt"]["lr"], exp_steps,
+                                           start_annealing=decay_steps, max_steps=tot_steps),
+            "interval": "step",
+        }
+
+        exp_scheduler1 = {
+            "scheduler": ExponentialWarmup(opt1, config["opt"]["lr"], exp_steps,
                                            start_annealing=decay_steps, max_steps=tot_steps),
             "interval": "step",
         }
@@ -495,12 +525,14 @@ def single_run(
                     verbose=True,
                     mode="max",
                 ),
-                ModelCheckpoint(
-                    logger.log_dir,
+                EarlyLimitedCheckpoint(
+                    max_epoch_to_save=139,  # 仅在前 139 轮保存
+                    dirpath=logger.log_dir,
                     monitor="val/obj_metric",
                     save_top_k=1,
                     mode="max",
                     save_last=True,
+                    every_n_epochs=1  # 每轮都检查
                 ),
             ]
     else:
@@ -512,24 +544,27 @@ def single_run(
         logger = True
         callbacks = None
 
+
     # calulate multiply–accumulate operation (MACs)
-    macs, _ = calculate_macs(sed_student, config, test_dataset)
-    print(f"---------------------------------------------------------------")
-    print(f"Total number of multiply–accumulate operation (MACs): {macs}\n")
+    # macs, _ = calculate_macs(sed_teacher, config, test_dataset)
+    # print(f"---------------------------------------------------------------")
+    # print(f"Total number of multiply–accumulate operation (MACs): {macs}\n")
 
     desed_training = SEDTask4(
         config,
         encoder=encoder,
         sed_student=sed_student,
+        sed_teacher=sed_teacher,
+        sed_master=sed_master,
         pretrained_model=pretrained,
-        opt=opt,
+        opt=[opt,opt1],
         train_data=train_dataset,
         valid_data=valid_dataset,
         test_data=test_dataset,
         train_sampler=batch_sampler,
-        scheduler=exp_scheduler,
+        scheduler=[exp_scheduler,exp_scheduler1],
         fast_dev_run=fast_dev_run,
-        evaluation=evaluation,
+        evaluation=evaluation
     )
 
     # Not using the fast_dev_run of Trainer because creates a DummyLogger so cannot check problems with the Logger
@@ -562,7 +597,8 @@ def single_run(
         max_epochs=n_epochs,
         callbacks=callbacks,
         accelerator=accelerator,
-        devices=devices,
+        # devices=devices,
+        devices=[0],
         strategy=config["training"].get("backend"),
         accumulate_grad_batches=config["training"]["accumulate_batches"],
         logger=logger,
@@ -582,8 +618,10 @@ def single_run(
         best_path = trainer.checkpoint_callback.best_model_path
         print(f"best model: {best_path}")
         test_state_dict = torch.load(best_path)["state_dict"]
+        # test_state_dict = torch.load('exp/2024_baseline/version_21/epoch=119-step=14160.ckpt')["state_dict"]
 
     desed_training.load_state_dict(test_state_dict)
+    sed_student.load_state_dict(torch.load("exp/2024_baseline/version_{}/sed_student.pth".format(logger.version)))
 
     results = trainer.test(desed_training)[0]
 
