@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import warnings
@@ -1065,7 +1066,6 @@ class SEDTask4(pl.LightningModule):
         strong_preds_master, weak_preds_master = self.detect(
             mels, self.sed_master, embeddings
         )
-
         #学生模型的预测
         strong_preds_student, weak_preds_student = self.detect(
             mels, self.sed_student, embeddings
@@ -1074,6 +1074,8 @@ class SEDTask4(pl.LightningModule):
         # 加载第三阶段校正后的teacher模型
         self.sed_teacher.load_state_dict(torch.load("exp/2024_baseline/version_{}/sed_teacher.pth".format(self.logger.version)))
         self.sed_master.load_state_dict(torch.load("exp/2024_baseline/version_{}/sed_master.pth".format(self.logger.version)))
+        # self.sed_teacher.load_state_dict(torch.load("exp/2024_baseline/version_8/sed_teacher.pth".format(self.logger.version)))
+        # self.sed_master.load_state_dict(torch.load("exp/2024_baseline/version_8/sed_master.pth".format(self.logger.version)))
 
         #第三阶段训练结束后的teacher模型的预测结果
         strong_preds_after_teacher, weak_preds_after_teacher = self.detect(
@@ -1216,9 +1218,6 @@ class SEDTask4(pl.LightningModule):
                 [self.test_buffer_psds_eval_after_master[th], decoded_after_master_strong[th]],
                 ignore_index=True,
             )
-
-
-
         # compute f1 score
         self.test_buffer_detections_thres05_teacher = pd.concat(
             [self.test_buffer_detections_thres05_teacher, decoded_teacher_strong[0.5]]
@@ -1843,3 +1842,5 @@ def _get_segment_scores(scores_df, clip_length, segment_length=1.0):
     return create_score_dataframe(
         np.array(segment_scores), np.array(segment_timestamps), event_classes
     )
+
+

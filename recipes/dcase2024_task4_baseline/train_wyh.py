@@ -541,6 +541,8 @@ def single_run(
         batch_sampler = None
         opt = None
         exp_scheduler = None
+        opt1 = None
+        exp_scheduler1 = None
         logger = True
         callbacks = None
 
@@ -680,7 +682,7 @@ def prepare_run(argv=None):
 
     test_model_state_dict = None
     if test_from_checkpoint is not None:
-        checkpoint = torch.load(test_from_checkpoint)
+        checkpoint = torch.load(test_from_checkpoint,map_location="cuda:0")
         configs_ckpt = checkpoint["hyper_parameters"]
         configs_ckpt["data"] = configs["data"]
         print(

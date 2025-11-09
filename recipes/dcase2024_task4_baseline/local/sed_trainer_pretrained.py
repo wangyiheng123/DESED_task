@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import warnings
@@ -1489,3 +1490,20 @@ def _get_segment_scores(scores_df, clip_length, segment_length=1.0):
     return create_score_dataframe(
         np.array(segment_scores), np.array(segment_timestamps), event_classes
     )
+
+def save_threshold_dfs(df_dict):
+    """
+    保存字典 {threshold: DataFrame} 到 JSON 文件
+    df_dict: dict, key = threshold, value = DataFrame
+    save_path: 文件路径，例如 "teacher_results.json"
+    """
+    # 转换为可序列化
+    json_ready = []
+    for threshold, df in df_dict.items():
+        json_ready.append({
+            "threshold": threshold,
+            "data": df.to_dict(orient="records")
+        })
+    # 保存
+    with open(os.path.join("/public/home/acal2okrm7997/g813_u1/wyh/DESED_task/recipes/dcase2024_task4_baseline/data/", "teacher_old.json"), "w", encoding="utf-8") as f:
+        json.dump(json_ready, f, ensure_ascii=False, indent=4)

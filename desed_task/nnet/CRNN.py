@@ -1,5 +1,6 @@
 import warnings
 
+import librosa
 import torch
 import torch.nn as nn
 import torchaudio.transforms
@@ -12,31 +13,31 @@ from .temporalAttentionNet import *
 
 class CRNN(nn.Module):
     def __init__(
-        self,
-        n_in_channel=1,
-        nclass=10,
-        attention=True,
-        activation="glu",
-        dropout=0.5,
-        train_cnn=True,
-        rnn_type="BGRU",
-        n_RNN_cell=128,
-        n_layers_RNN=2,
-        dropout_recurrent=0,
-        cnn_integration=False,
-        freeze_bn=False,
-        use_embeddings=False,
-        embedding_size=527,
-        embedding_type="global",
-        frame_emb_enc_dim=512,
-        aggregation_type="global",
-        specaugm_t_p=0.2,
-        specaugm_t_l=5,
-        specaugm_f_p=0.2,
-        specaugm_f_l=10,
-        dropstep_recurrent=0.0,
-        dropstep_recurrent_len=5,
-        **kwargs,
+            self,
+            n_in_channel=1,
+            nclass=10,
+            attention=True,
+            activation="glu",
+            dropout=0.5,
+            train_cnn=True,
+            rnn_type="BGRU",
+            n_RNN_cell=128,
+            n_layers_RNN=2,
+            dropout_recurrent=0,
+            cnn_integration=False,
+            freeze_bn=False,
+            use_embeddings=False,
+            embedding_size=527,
+            embedding_type="global",
+            frame_emb_enc_dim=512,
+            aggregation_type="global",
+            specaugm_t_p=0.2,
+            specaugm_t_l=5,
+            specaugm_f_p=0.2,
+            specaugm_f_l=10,
+            dropstep_recurrent=0.0,
+            dropstep_recurrent_len=5,
+            **kwargs,
     ):
         """
             Initialization of CRNN model
@@ -103,8 +104,6 @@ class CRNN(nn.Module):
         else:
             NotImplementedError("Only BGRU supported for CRNN for now")
 
-
-
         self.dropout = nn.Dropout(dropout)
 
         if isinstance(self.nclass, (tuple, list)) and len(self.nclass) > 1:
@@ -154,20 +153,34 @@ class CRNN(nn.Module):
             else:
                 self.cat_tf = torch.nn.Linear(2 * nb_in, nb_in)
 
+    def featuresChange(self, x):
+        B, T, D = x.shape
+        x_flat = x.reshape(-1, D)
+        # 去中心化
+        x_centered = x_flat - x_flat.mean(dim=0)
+        # 降维
+        U, S, V = torch.pca_lowrank(x_centered, 27)
+        # 得到投影矩阵
+        x_pca = x_centered @ V[:, :27]
+        # 恢复原始形状
+        x_pca = x_pca.reshape(B, T, -1)
+
+        return x_pca
+
     def _get_logits_one_head(
-        self, x, pad_mask, dense, dense_softmax, classes_mask=None
+            self, x, pad_mask, dense, dense_softmax, classes_mask=None
 
     ):
+        # strong = self.featuresChange(x)
         strong = dense(x)  # [bs, frames, nclass]
         strong = self.sigmoid(strong)
         if classes_mask is not None:
             classes_mask = ~classes_mask[:, None].expand_as(strong)
-        if self.attention in [True, "legacy"]:   #将attention pooling改为时序聚合
-            #实例化时序聚合网络
-            #时序聚合网络前馈传播(这个输出的结果strong是聚合了每个时间步的特征的)
+        if self.attention in [True, "legacy"]:  # 将attention pooling改为时序聚合
+            # 实例化时序聚合网络
+            # 时序聚合网络前馈传播(这个输出的结果strong是聚合了每个时间步的特征的)
             # weak = self.taNet(strong).mean(1) #[B,T,C]
             # weak = self.sigmoid(weak)
-
             sof = dense_softmax(x)  # [bs, frames, nclass]
             if not pad_mask is None:
                 sof = sof.masked_fill(pad_mask.transpose(1, 2), -1e30)  # mask attention
@@ -218,7 +231,6 @@ class CRNN(nn.Module):
     def apply_specaugment(self, x):
 
         if self.training:
-
             timemask = torchaudio.transforms.TimeMasking(
                 self.specaugm_t_l, True, self.specaugm_t_p
             )

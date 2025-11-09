@@ -2,7 +2,8 @@ pretrained:
   model: beats
   e2e: False
   freezed: True
-  extracted_embeddings_dir: ./embeddings
+#  extracted_embeddings_dir: ./embeddings
+  extracted_embeddings_dir: ../../../../../wmnt/DCASE/embeddings
 training:
   #batch size: [maestro, synth, strong, weak, unlabel]
 #  batch_size: [48, 24, 24, 48, 96]
@@ -15,7 +16,7 @@ training:
   const_max: 2 # max weight used for self supervised loss
   n_epochs_warmup: 50 # num epochs used for exponential warmup
   epoch_decay: 100
-  num_workers: 12 # change according to your cpu
+  num_workers: 6 # change according to your cpu
   n_epochs: 400 # max num epochs 8 400
   early_stop_patience: 200 # Same as number of epochs by default, so no early stopping used
   accumulate_batches: 1
@@ -44,45 +45,76 @@ scaler:
 data: # change with your paths if different.
   # NOTE: if you have data in 44kHz only then synth_folder will be the path where
   # resampled data will be placed.
-#  synth_folder: "../../data/dcase/dataset/dcase_synth/audio/train/synthetic21_train/soundscapes_16k/"
-  synth_folder: "../../../DESED_dataset/SynthDataset/Train/soundscapes_16k/"  #1
-  synth_folder_44k: "../../data/dcase/dataset/dcase_synth/audio/train/synthetic21_train/soundscapes/" #1
-#  synth_tsv:  "../../data/dcase/dataset/dcase_synth/metadata/train/synthetic21_train/soundscapes.tsv"
-  synth_tsv:  "../../../DESED_dataset/annotations/synth_train(10000).tsv"   #1
-  strong_folder: "../../data/dcase/dataset/audio/train/strong_label_real_16k/"  #1
-  strong_folder_44k: "../../data/dcase/dataset/audio/train/strong_label_real/" #1
-  strong_tsv: "../../data/dcase/dataset/metadata/train/audioset_strong.tsv"  #1
-  synth_maestro_train: "../../data/dcase/dataset/audio/maestro_synth_train_16k" #2
-  synth_maestro_train_44k: "../../data/dcase/dataset/audio/maestro_synth_train"  #1
-  synth_maestro_tsv: "../../data/dcase/dataset/metadata/maestro_synth_train.tsv" #1
-  real_maestro_train_folder: "../../data/dcase/dataset/audio/maestro_real_train_16k" #1
-  real_maestro_train_folder_44k: "../../data/dcase/dataset/audio/maestro_real_train" #1
-  real_maestro_train_tsv: "../../data/dcase/dataset/metadata/maestro_real_train.tsv" #1
-  real_maestro_val_folder: "../../data/dcase/dataset/audio/maestro_real_validation_16k" #1
-  real_maestro_val_folder_44k: "../../data/dcase/dataset/audio/maestro_real_validation" #1
-  real_maestro_val_tsv: "../../data/dcase/dataset/metadata/maestro_real_validation.tsv" #1
-  real_maestro_val_dur: "../../data/dcase/dataset/metadata/maestro_real_durations.tsv"  #1
-#  weak_folder: "../../data/dcase/dataset/audio/train/weak_16k/"
-  weak_folder: "../../../DESED_dataset/weak_16k/"   #1
-  weak_folder_44k: "../../data/dcase/dataset/audio/train/weak/"  #1
-  weak_tsv: "../../data/dcase/dataset/metadata/train/weak.tsv" #1
-#  unlabeled_folder: "../../data/dcase/dataset/audio/train/unlabel_in_domain_16k/"
-  unlabeled_folder: "../../../DESED_dataset/unlabel_in_domain_16k/"  #1
-  unlabeled_folder_44k: "../../data/dcase/dataset/audio/train/unlabel_in_domain/" #1
-#  synth_val_folder: "../../data/dcase/dataset/audio/validation/synthetic21_validation/soundscapes_16k/"
-  synth_val_folder: "../../../DESED_dataset/SynthDataset/Val/soundscapes_16k/"   #1
-  synth_val_folder_44k: "../../data/dcase/dataset/dcase_synth/audio/validation/synthetic21_validation/soundscapes/" #1
-  synth_val_tsv:  "../../../DESED_dataset/annotations/synth_val(2500).tsv"  #1
-  synth_val_dur: "../../../DESED_dataset/annotations/synth_val_duration.tsv"  #1
-#  test_folder: "../../data/dcase/dataset/audio/validation/validation_16k/"
-  test_folder: "../../../DESED_dataset/validation_16k/"   #1
-  test_folder_44k: "../../data/dcase/dataset/audio/validation/validation/"  #1
-  test_tsv: "../../data/dcase/dataset/metadata/validation/validation.tsv"  #1
-  test_dur: "../../data/dcase/dataset/metadata/validation/validation_durations.tsv" #1
-#  eval_folder: "../../data/dcase/dataset/audio/eval24_16k"
-#  eval_folder_44k: "../../data/dcase/dataset/audio/eval24"
-  eval_folder: "../../data/dcase/dataset/audio/eval24_16k"  #1
-  eval_folder_44k: "../../../DESED_dataset/eval24"  #1
+##  synth_folder: "../../data/dcase/dataset/dcase_synth/audio/train/synthetic21_train/soundscapes_16k/"
+#  synth_folder: "../../../DESED_dataset/SynthDataset/Train/soundscapes_16k/"  #1
+#  synth_folder_44k: "../../../DESED_task/data/dcase/dataset/dcase_synth/audio/train/synthetic21_train/soundscapes/" #1
+##  synth_tsv:  "../../data/dcase/dataset/dcase_synth/metadata/train/synthetic21_train/soundscapes.tsv"
+#  synth_tsv:  "../../../DESED_dataset/annotations/synth_train(10000).tsv"   #1
+#  strong_folder: "../../../DESED_task/data/dcase/dataset/audio/train/strong_label_real_16k/"  #1
+#  strong_folder_44k: "../../../DESED_task/data/dcase/dataset/audio/train/strong_label_real/" #1
+#  strong_tsv: "../../../DESED_task/data/dcase/dataset/metadata/train/audioset_strong.tsv"  #1
+#  synth_maestro_train: "../../../DESED_task/data/dcase/dataset/audio/maestro_synth_train_16k" #2
+#  synth_maestro_train_44k: "../../../DESED_task/data/dcase/dataset/audio/maestro_synth_train"  #1
+#  synth_maestro_tsv: "../../../DESED_task/data/dcase/dataset/metadata/maestro_synth_train.tsv" #1
+#  real_maestro_train_folder: "../../../DESED_task/data/dcase/dataset/audio/maestro_real_train_16k" #1
+#  real_maestro_train_folder_44k: "../../../DESED_task/data/dcase/dataset/audio/maestro_real_train" #1
+#  real_maestro_train_tsv: "../../../DESED_task/data/dcase/dataset/metadata/maestro_real_train.tsv" #1
+#  real_maestro_val_folder: "../../../DESED_task/data/dcase/dataset/audio/maestro_real_validation_16k" #1
+#  real_maestro_val_folder_44k: "../../../DESED_task/data/dcase/dataset/audio/maestro_real_validation" #1
+#  real_maestro_val_tsv: "../../../DESED_task/data/dcase/dataset/metadata/maestro_real_validation.tsv" #1
+#  real_maestro_val_dur: "../../../DESED_task/data/dcase/dataset/metadata/maestro_real_durations.tsv"  #1
+##  weak_folder: "../../data/dcase/dataset/audio/train/weak_16k/"
+#  weak_folder: "../../../DESED_dataset/weak_16k/"   #1
+#  weak_folder_44k: "../../../DESED_task/data/dcase/dataset/audio/train/weak/"  #1
+#  weak_tsv: "../../../DESED_task/data/dcase/dataset/metadata/train/weak.tsv" #1
+##  unlabeled_folder: "../../data/dcase/dataset/audio/train/unlabel_in_domain_16k/"
+#  unlabeled_folder: "../../../DESED_dataset/unlabel_in_domain_16k/"  #1
+#  unlabeled_folder_44k: "../../../DESED_task/data/dcase/dataset/audio/train/unlabel_in_domain/" #1
+##  synth_val_folder: "../../data/dcase/dataset/audio/validation/synthetic21_validation/soundscapes_16k/"
+#  synth_val_folder: "../../../DESED_dataset/SynthDataset/Val/soundscapes_16k/"   #1
+#  synth_val_folder_44k: "../../../DESED_task/data/dcase/dataset/dcase_synth/audio/validation/synthetic21_validation/soundscapes/" #1
+#  synth_val_tsv:  "../../../DESED_dataset/annotations/synth_val(2500).tsv"  #1
+#  synth_val_dur: "../../../DESED_dataset/annotations/synth_val_duration.tsv"  #1
+##  test_folder: "../../data/dcase/dataset/audio/validation/validation_16k/"
+#  test_folder: "../../../DESED_dataset/validation_16k/"   #1
+#  test_folder_44k: "../../../DESED_task/data/dcase/dataset/audio/validation/validation/"  #1
+#  test_tsv: "../../../DESED_task/data/dcase/dataset/metadata/validation/validation.tsv"  #1
+#  test_dur: "../../../DESED_task/data/dcase/dataset/metadata/validation/validation_durations.tsv" #1
+##  eval_folder: "../../data/dcase/dataset/audio/eval24_16k"
+##  eval_folder_44k: "../../data/dcase/dataset/audio/eval24"
+#  eval_folder: "../../../DESED_task/data/dcase/dataset/audio/eval24_16k"  #1
+#  eval_folder_44k: "../../../DESED_dataset/eval24"  #1
+  synth_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/dcase_synth/audio/train/synthetic21_train/soundscapes_16k/"
+  synth_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/dcase_synth/audio/train/synthetic21_train/soundscapes/"
+  synth_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/dcase_synth/metadata/train/synthetic21_train/soundscapes.tsv"
+  strong_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/train/strong_label_real_16k/"
+  strong_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/train/strong_label_real/"
+  strong_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/train/audioset_strong.tsv"
+  synth_maestro_train: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/maestro_synth_train_16k"
+  synth_maestro_train_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/maestro_synth_train"
+  synth_maestro_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/maestro_synth_train.tsv"
+  real_maestro_train_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/maestro_real_train_16k"
+  real_maestro_train_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/maestro_real_train"
+  real_maestro_train_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/maestro_real_train.tsv"
+  real_maestro_val_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/maestro_real_validation_16k"
+  real_maestro_val_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/maestro_real_validation"
+  real_maestro_val_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/maestro_real_validation.tsv"
+  real_maestro_val_dur: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/maestro_real_durations.tsv"
+  weak_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/train/weak_16k/"
+  weak_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/train/weak/"
+  weak_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/train/weak.tsv"
+  unlabeled_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/train/unlabel_in_domain_16k/"
+  unlabeled_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/train/unlabel_in_domain/"
+  synth_val_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/validation/synthetic21_validation/soundscapes_16k/"
+  synth_val_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/dcase_synth/audio/validation/synthetic21_validation/soundscapes/"
+  synth_val_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/dcase_synth/metadata/validation/synthetic21_validation/soundscapes.tsv"
+  synth_val_dur: "../../../../../wmnt/DCASE/data/dcase/dataset/dcase_synth/metadata/validation/synthetic21_validation/durations.tsv"
+  test_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/validation/validation_16k/"
+  test_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/validation/validation/"
+  test_tsv: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/validation/validation.tsv"
+  test_dur: "../../../../../wmnt/DCASE/data/dcase/dataset/metadata/validation/validation_durations.tsv"
+  eval_folder: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/eval24_16k"
+  eval_folder_44k: "../../../../../wmnt/DCASE/data/dcase/dataset/audio/eval24"
   audio_max_len: 10
   fs: 16000
   net_subsample: 4
