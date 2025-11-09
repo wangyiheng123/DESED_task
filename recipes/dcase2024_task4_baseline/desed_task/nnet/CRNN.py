@@ -308,6 +308,7 @@ class CRNN(nn.Module):
                 reshape_emb = torch.nn.functional.adaptive_avg_pool1d(
                     embeddings, x.shape[1]
                 ).transpose(1, 2)
+                x = F.relu(x)
             else:
                 raise NotImplementedError
 
